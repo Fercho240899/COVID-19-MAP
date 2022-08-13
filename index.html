@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map of COVID 19</title>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        .map {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map" class="map"></div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBALxXFmKG8DDHtC7nlvQUA8X5d-36ZP58"></script>
+    <script type="module">
+        import mapStyle from './map-style.js'
+        const $map = document.querySelector('#map')
+        const map = new window.google.maps.Map($map, {
+            center: {
+                lat: 0,
+                lng: 0,
+            },
+            zoom: 3,
+            styles: mapStyle,
+        })
+        renderData()
+        async function getData() {
+            const response = await fetch('https://master-covid-19-api-laeyoung.endpoint.ainize.ai/jhu-edu/latest')
+            const data = await response.json()
+            return data
+        }
+
+        const popup = new window.google.maps.InfoWindow()
+
+        function renderExtraData ({confirmed, deaths, recovered, provincestate, countryregion}){
+            return`
+            <div>
+                <p><strong>${provincestate}- ${countryregion}</strong></p>
+                <p>confirmados: ${confirmed}</p>
+                <p>muertes: ${deaths}</p>
+                <p>recuperados: ${recovered}</p>
+            </div>
+            `
+        }
+
+        async function renderData() {
+            const data = await getData()
+            console.log(data)
+            data.forEach(item => {
+                if (item.deaths > 0) {
+                const marker = new window.google.maps.Marker({
+                    position: {
+                        lat: item.location.lat,
+                        lng: item.location.lng,
+                    },
+                    map,
+                    icon:'./icon.png'
+                })
+                marker.addListener('click', () => {
+                    popup.setContent(renderExtraData(item))
+                    popup.open(map, marker)
+                })
+            }
+            })
+        }
+    </script>
+</body>
+
+</html>
